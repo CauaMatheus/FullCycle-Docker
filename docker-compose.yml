@@ -1,26 +1,33 @@
 version: "3"
 
 services:
-  laravel:
-    container_name: laravel
+  app:
+    container_name: node-app
+    entrypoint: dockerize -wait tcp://db:3306 -timeout 20s node index.js
     build:
-      context: ./laravel
-      dockerfile: Dockerfile.prod
-    image: farukkon/laravel:prod
+      context: ./node
     networks:
-      - laranet
-  
-  nginx:
-    container_name: nginx
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile.prod
-    image: farukkon/nginx:prod
-    networks:
-      - laranet
+      - node-network
+    volumes:
+      - ./node:/usr/src/app
+    tty: true
     ports:
-      - 8080:80
-  
+      - 3000:3000
+
+  db:
+    image: mysql:5.7
+    command: --innodb-use-native-aio=0
+    container_name: name
+    restart: always
+    tty: true
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=nodedb
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - node-network
+
 networks:
-  laranet:
+  node-network:
     driver: bridge
